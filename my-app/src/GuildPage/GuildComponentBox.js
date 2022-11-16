@@ -1,10 +1,11 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import GuildRoomInfo from './GuildRoomInfo';
 
-const GuildComponentBox = (props) => {
-    const { guildInfo, nickname, socketId } = props
+const GuildComponentBox = ({ guildInfo }) => {
     const [roomNumber, setRoomNumber] = useState(1)
-
+    useEffect(() => {
+        console.log("?")
+    }, [])
     return (
         <div>
             <div className='container'>
