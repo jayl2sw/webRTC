@@ -22,20 +22,19 @@ const GuildRoomInfo = ({ guildInfo, roomNumber }) => {
                     <button onClick={ () => {
                         onClickModal() 
                     }}>start</button>
-                    {isOpenModal && !isOpenRoomModal && <div isOpenModal={isOpenModal} toggle={onClickModal}>
-                        <ModalContainer>
-                            <JoinRoom roomInfo={roomInfo} guildId={guildInfo.guildId} onClickModal={onClickModal} onClickRoomModal={onClickRoomModal}/> 
-                            {/* <Room/>                            */}
-                        </ModalContainer>
+                    {isOpenModal && !isOpenRoomModal && 
+                        <div isOpenModal={isOpenModal} toggle={onClickModal}>
+                            <ModalContainer>
+                                <JoinRoom roomInfo={roomInfo} guildId={guildInfo.guildId} onClickModal={onClickModal} onClickRoomModal={onClickRoomModal}/> 
+                            </ModalContainer>
                     </div>}
-                    {isOpenRoomModal && <div isOpenRoomModal={isOpenRoomModal} toggle={onClickRoomModal}>
-                        <RoomModal>
-                            <Room onClickRoomModal={onClickRoomModal}></Room>
-                        </RoomModal>
+                    {isOpenRoomModal && 
+                        <div isOpenRoomModal={isOpenRoomModal} toggle={onClickRoomModal}>
+                            <RoomModal>
+                                <Room roomInfo={roomInfo} guildId={guildInfo.guildId} onClickRoomModal={onClickRoomModal}></Room>
+                            </RoomModal>
                         </div>
                     }
-
-
                 </div>
             }
         </div>

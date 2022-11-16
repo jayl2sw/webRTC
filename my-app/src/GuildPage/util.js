@@ -26,4 +26,20 @@ export const useRoomModal = () => {
   };
 };
 
+export const useOverlay = () => {
+  const [Overlay, setOverlay] = useState(true);
+
+  const showOverlay = (data) => {
+    setOverlay(data);
+  };
+
+  return {
+    Overlay,
+    showOverlay,
+  };
+};
+
+
+
+
 export default useModal;

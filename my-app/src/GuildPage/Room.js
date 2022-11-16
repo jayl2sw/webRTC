@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { exitRoom } from './GuildPage';
-const Room = ({ onClickRoomModal }) => {
+import { getLocalPreviewAndInitRoomConnection } from './GuildPage';
+import VideoContainer from './VideoContainer';
+
+
+
+const Room = ({ roomInfo, guildId, onClickRoomModal }) => {
+    
+    useEffect(() => {
+        getLocalPreviewAndInitRoomConnection() 
+        return () => {
+            exitRoom();
+        }
+    }, []);
     return (
         <div>
-           <button onClick={() => {
+            <VideoContainer/>
+            <p>{roomInfo.roomNumber}</p>
+            <p>{roomInfo.videoId}</p>
+            <p>{ JSON.stringify(roomInfo) }</p>  
+            <button onClick={() => {
                 onClickRoomModal()
                 exitRoom()
             }}>나가기</button>
+            
         </div>
     );
 };

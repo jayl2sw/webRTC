@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import GuildComponentBox from  './GuildComponentBox'
 import io from "socket.io-client";
-// import Peer from 'simple-peer'
+import Peer from 'simple-peer'
+
+
+import "./GuildPage.css";
 
 const guildId = 3;
 const nickname = "nickname";
@@ -55,6 +58,24 @@ const GuildPage = () => {
               rooms: data.guild.rooms,
               connectedUsers: data.guild.connectedUsers,
           }));
+      })
+
+      socket.on("conn-prepare", (data) => {
+        const { connUserSocketId } = data;
+        prepareNewPeerConnection(connUserSocketId, false);
+
+        // inform the user which just join the room that we have prepared for incoming connection
+        socket.emit('conn-init', { connUserSocketId: connUserSocketId })
+      })
+
+      socket.on("conn-signal", (data) => {
+        handleSignalingData(data);
+      });
+
+      socket.on("conn-init", (data) => {
+        const { connUserSocketId } = data;
+        prepareNewPeerConnection(connUserSocketId, true);
+
       })
   }
 
@@ -114,7 +135,118 @@ export const exitRoom = () =>{
   console.log("--------------------exit-room----------------", socket)
   socket.emit("exit-room");
 }
+
+
+let localStream;
+// join-room 대체
+const defaultConstraint = {
+  audio:true,
+  video:true,
+}
+
+export const getLocalPreviewAndInitRoomConnection = () => {
+    navigator.mediaDevices.getUserMedia(defaultConstraint).then(stream => {
+        localStream = stream;
+        showLocalVideoPreview(localStream);
+
+    }).catch(err => {
+        console.log('error occurred when trying to get an access to local stream')
+        console.log(err);
+
+    })
+    
+}
+ 
+
+//////////////////////////////////////////UI///////////////////////////////////////////////////////////////
+const showLocalVideoPreview = (stream) => {
+  // local 프리뷰 바닐라 스크립트로 짜야해서 index.html에 div만들고 index.css에 css적용해야함
+  // 근데 모달 뒤에 나와요 어캄?
+  const videosContainer = document.getElementById("RTCroom");
+  videosContainer.classList.add("videos_portal_styles");
+  const videoContainer = document.createElement("div");
+  videoContainer.classList.add("video_track_container");
+  const videoElement = document.createElement("video");
+  videoElement.autoplay = true;
+  videoElement.muted = true;
+  videoElement.srcObject = stream;
+
+  videoElement.onloadedmetadata = () => {
+    videoElement.play();
+  };
+
+  videoContainer.appendChild(videoElement);
+  videosContainer.appendChild(videoContainer);
+};
+
+let peers = {};
+let streams = {};
+
+const getConfiguration = () => {
+  return {
+    iceServers: [
+      {
+        urls: 'stun:stun.l.google.com:19302'
+      }
+    ]
+  }
+}
+
 export const prepareNewPeerConnection = (connUserSocketId, isInitiator) => {
+  const configuration = getConfiguration();
+
+  peers[connUserSocketId] = new Peer({
+    initiator: isInitiator,
+    config: configuration,
+    stream: localStream,
+  });
+
+  peers[connUserSocketId].on('signal', (data) => {
+    
+    // webRTC offer, webRTC Answer
+    const signalData = {
+      signal: data,
+      connUserSocketId: connUserSocketId,
+    }
+
+    signalPeerData(signalData)
+  });
+
+  peers[connUserSocketId].on('stream', (stream) => {
+    console.log("new stream came");
+
+    addStream(stream, connUserSocketId);
+    streams = [...streams, stream]
+  })
+}
+
+const addStream = (stream, connUserSocketId) => {
+  // display incoming stream 다른 사람들 스트림 보여줌
+  const videosContainer = document.getElementById("RTCroom");
+  const videoContainer = document.createElement("div");
+  videoContainer.id = connUserSocketId;
+
+  videoContainer.classList.add("video_track_container");
+  const videoElement = document.createElement("video");
+  videoElement.autoplay = true;
+  videoElement.srcObject = stream;
+  videoElement.id = `${connUserSocketId}-video`;
+
+  videoElement.onloadedmetadata = () => {
+    videoElement.play();
+  };
+
+  videoContainer.appendChild(videoElement);
+  videosContainer.appendChild(videoContainer);
+}
+
+const signalPeerData = (data) => {
+  socket.emit("conn-signal", data);
+}
+
+const handleSignalingData = (data) => {
+  // add signaling data to peer connection
+  peers[data.connUserSocketId].signal(data.signal);
 
 }
 
