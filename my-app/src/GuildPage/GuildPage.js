@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import GuildComponentBox from  './GuildComponentBox'
+import GuildComponentBox from './GuildComponentBox'
 import io from "socket.io-client";
 import Peer from 'simple-peer';
 
@@ -8,89 +8,93 @@ import "./GuildPage.css";
 
 const guildId = 3;
 const nickname = "nickname";
+const messages = [];
 
 const GuildPage = () => {
-    const [bool, setBool] = useState(false);
+  const [bool, setBool] = useState(false);
 
-    useEffect( () =>  {
-      connectWithSocketIOServer();    
-      setBool(joinGuildChannel(nickname, guildId));
-      return () => {     
-      }
-    }, []);
-    
+  useEffect(() => {
+    connectWithSocketIOServer();
+    setBool(joinGuildChannel(nickname, guildId));
+    return () => {
+    }
+  }, []);
 
-    const [guildInfo, setGuildInfo] = useState({ guildId: guildId, rooms:[
-        {
-          roomNumber: 1,
-          videoId: null,
-          connectedUsers: [],
-        },
-        {
-          roomNumber: 2,
-          videoId: null,
-          connectedUsers: [],
-        },
-        {
-          roomNumber: 3,
-          videoId: null,
-          connectedUsers: [],
-        },
-      ], connectedUsers:[] })
 
-    useEffect( () => {
-        console.log("guildInfo changed:", guildInfo);
-    }, [guildInfo])
-    
-    const connectWithSocketIOServer = () => {
-      socket = io(SERVER);
-    
-      socket.on("connect", () => {
-        console.log("successfully connected with socket io server");
-        console.log(socket.id);
-        // setSocketId(socket.id);
-      });
-    
-      socket.on("guild-update", (data) => {
-          setGuildInfo((prevState) => ({
-              ...prevState, 
-              guildId: data.guild.guildId,
-              rooms: data.guild.rooms,
-              connectedUsers: data.guild.connectedUsers,
-          }));
-      })
+  const [guildInfo, setGuildInfo] = useState({
+    guildId: guildId, rooms: [
+      {
+        roomNumber: 1,
+        videoId: null,
+        connectedUsers: [],
+      },
+      {
+        roomNumber: 2,
+        videoId: null,
+        connectedUsers: [],
+      },
+      {
+        roomNumber: 3,
+        videoId: null,
+        connectedUsers: [],
+      },
+    ], connectedUsers: []
+  })
 
-      socket.on("conn-prepare", (data) => {
-        const { connUserSocketId } = data;
-        console.log("====================prepare 시작===================")
-        prepareNewPeerConnection(connUserSocketId, false);
+  useEffect(() => {
+    console.log("guildInfo changed:", guildInfo);
+  }, [guildInfo])
 
-        // inform the user which just join the room that we have prepared for incoming connection
-        socket.emit('conn-init', { connUserSocketId: connUserSocketId })
-      })
+  const connectWithSocketIOServer = () => {
+    socket = io(SERVER);
 
-      socket.on("conn-signal", (data) => {
-        handleSignalingData(data);
-      });
+    socket.on("connect", () => {
+      console.log("successfully connected with socket io server");
+      console.log(socket.id);
+      // setSocketId(socket.id);
+    });
 
-      socket.on("conn-init", (data) => {
-        console.log("====================init 시작===================")
-        const { connUserSocketId } = data;
-        prepareNewPeerConnection(connUserSocketId, true);
-      })
+    socket.on("guild-update", (data) => {
+      setGuildInfo((prevState) => ({
+        ...prevState,
+        guildId: data.guild.guildId,
+        rooms: data.guild.rooms,
+        connectedUsers: data.guild.connectedUsers,
+      }));
+    })
+
+    socket.on("conn-prepare", (data) => {
+      const { connUserSocketId } = data;
+      console.log("====================prepare 시작===================")
+      prepareNewPeerConnection(connUserSocketId, false);
+
+      // inform the user which just join the room that we have prepared for incoming connection
+      socket.emit('conn-init', { connUserSocketId: connUserSocketId })
+    })
+
+    socket.on("conn-signal", (data) => {
+      handleSignalingData(data);
+    });
+
+    socket.on("conn-init", (data) => {
+      console.log("====================init 시작===================")
+      const { connUserSocketId } = data;
+      prepareNewPeerConnection(connUserSocketId, true);
+    })
   }
 
   return (
-      <div>
-          {bool &&
-          <GuildComponentBox guildInfo={guildInfo} localStream={localStream}/>
-          }
-      </div>
+    <div>
+      {bool &&
+        <GuildComponentBox messages={messages} guildInfo={guildInfo} localStream={localStream} />
+      }
+    </div>
   );
 
 
 
 };
+
 
 const SERVER = "http://localhost:5002";
 
@@ -98,8 +102,8 @@ let socket = null;
 
 export const joinGuildChannel = (nickname, guildId) => {
   const data = {
-      nickname,
-      guildId
+    nickname,
+    guildId
   }
   console.log("socket---------------------------11111111", socket)
   socket.emit("join-guild-channel", data)
@@ -108,31 +112,31 @@ export const joinGuildChannel = (nickname, guildId) => {
 export const createRoom = (roomNumber, guildId, videoId, learningRecordId) => {
   // emit an event to server that we would like to create new room
   const data = {
-      roomNumber,
-      guildId,
-      videoId,
-      learningRecordId,
+    roomNumber,
+    guildId,
+    videoId,
+    learningRecordId,
   };
   console.log("-------------------create room------------------", socket)
   socket.emit("create-room", data);
-  
+
 };
 export const joinRoom = (roomNumber, guildId, learningRecordId) => {
   // emit an event to server that we would like to create new room
   const data = {
-      roomNumber,
-      guildId,
-      learningRecordId,
+    roomNumber,
+    guildId,
+    learningRecordId,
   };
   console.log("-------------------join room------------------", socket)
-  socket.emit("join-room", data);   
+  socket.emit("join-room", data);
 };
 export const disconnect = () => {
   // emit an event to server that we would like to create new room
   console.log("-------------------disconnect---------------", socket)
-  socket.emit("join-room");   
+  socket.emit("join-room");
 };
-export const exitRoom = () =>{
+export const exitRoom = () => {
   console.log("--------------------exit-room----------------", socket)
   socket.emit("exit-room");
 }
@@ -142,8 +146,8 @@ let localStream;
 
 // join-room 대체
 const defaultConstraint = {
-  audio:true,
-  video:true,
+  audio: true,
+  video: true,
 }
 
 export const getLocalPreviewAndInitRoomConnection = (
@@ -155,19 +159,20 @@ export const getLocalPreviewAndInitRoomConnection = (
 
     if (roomInfo) {
       if (roomInfo.connectedUsers.length === 0) {
-          createRoom(roomNumber, guildId, videoId, learningRecordId)
+        createRoom(roomNumber, guildId, videoId, learningRecordId)
       } else {
-          joinRoom(roomNumber, guildId, learningRecordId) }
-  } else {
+        joinRoom(roomNumber, guildId, learningRecordId)
+      }
+    } else {
       createRoom(roomNumber, guildId, videoId, learningRecordId)
-  }
+    }
   }).catch(err => {
-      console.log('error occurred when trying to get an access to local stream')
-      console.log(err);
-  }) 
-    
+    console.log('error occurred when trying to get an access to local stream')
+    console.log(err);
+  })
+
 }
- 
+
 
 //////////////////////////////////////////UI///////////////////////////////////////////////////////////////
 const showLocalVideoPreview = (stream) => {
@@ -203,15 +208,17 @@ const getConfiguration = () => {
   }
 }
 
+const messengerChanel = 'messenger';
 
-export const prepareNewPeerConnection = ( connUserSocketId, isInitiator  ) => {
+export const prepareNewPeerConnection = (connUserSocketId, isInitiator) => {
   const configuration = getConfiguration();
 
-  console.log("==============localstream ============",localStream)
+  console.log("==============localstream ============", localStream)
   peers[connUserSocketId] = new Peer({
     initiator: isInitiator,
     config: configuration,
     stream: localStream,
+    channelName: messengerChanel,
   });
 
   peers[connUserSocketId].on("signal", (data) => {
@@ -230,6 +237,11 @@ export const prepareNewPeerConnection = ( connUserSocketId, isInitiator  ) => {
 
     addStream(stream, connUserSocketId);
     streams = [...streams, stream]
+  })
+
+  peers[connUserSocketId].on('data', (data) => {
+    const messageData = JSON.parse(data);
+    appendNewMessage(messageData);
   })
 }
 
@@ -265,5 +277,36 @@ const handleSignalingData = (data) => {
   peers[data.connUserSocketId].signal(data.signal);
 
 }
+
+////////////////////// Messages /////////////////////////////
+
+
+// 들어온 메시지 저장하기
+const appendNewMessage = (messageData) => {
+  messages = [...messages, messageData]
+}
+
+// 메시지 전송하기
+// https://www.udemy.com/course/webrtc-practical-course-create-video-chat-group-call-app/learn/lecture/27970252#content
+export const sendMessageUsingDataChannel = (messageContent) => {
+
+  const localMessageData = {
+    content: messageContent,
+    nickname,
+    messageCreatedByMe: true
+  }
+
+  appendNewMessage(localMessageData);
+
+  const messageData = {
+    content: messageContent,
+    nickname,
+  }
+  const stringifiedMessageData = JSON.stringify(messageData);
+  for (let socketId in peers) {
+    peers[socketId].send(stringifiedMessageData);
+  }
+}
+
 
 export default GuildPage;

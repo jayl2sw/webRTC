@@ -1,39 +1,39 @@
 import React, { useState } from 'react';
 import useModal, { useRoomModal } from './util';
-import styled from 'styled-components' 
+import styled from 'styled-components'
 import JoinRoom from './JoinRoom';
 import Room from './Room';
 
 
-const GuildRoomInfo = ({ localStream, guildInfo, roomNumber }) => {
+const GuildRoomInfo = ({ messages, localStream, guildInfo, roomNumber }) => {
     const { isOpenModal, onClickModal } = useModal();
     const { isOpenRoomModal, onClickRoomModal } = useRoomModal();
     const [videoId, setVideoId] = useState("")
     const [learningRecordId, setLearningRecordId] = useState("")
-        
-    let roomInfo = guildInfo.rooms[roomNumber-1];
+
+    let roomInfo = guildInfo.rooms[roomNumber - 1];
 
     return (
         <div>
             {roomInfo &&
                 <div>
-                    <p>videoId: {roomInfo.videoId}</p>  
+                    <p>videoId: {roomInfo.videoId}</p>
                     <p>{roomInfo.roomNumber}</p>
-                    <p>현재 접속한 사람들</p>  
-                    <p>{ JSON.stringify(roomInfo) }</p>  
-                    <button onClick={ () => {
-                        onClickModal() 
+                    <p>현재 접속한 사람들</p>
+                    <p>{JSON.stringify(roomInfo)}</p>
+                    <button onClick={() => {
+                        onClickModal()
                     }}>start</button>
-                    {isOpenModal && !isOpenRoomModal && 
+                    {isOpenModal && !isOpenRoomModal &&
                         <div isOpenModal={isOpenModal} toggle={onClickModal}>
                             <ModalContainer>
-                                <JoinRoom roomInfo={roomInfo} setVideoId={setVideoId} setLearningRecordId={setLearningRecordId} localStream={localStream} guildId={guildInfo.guildId} onClickModal={onClickModal} onClickRoomModal={onClickRoomModal}/> 
+                                <JoinRoom roomInfo={roomInfo} setVideoId={setVideoId} setLearningRecordId={setLearningRecordId} localStream={localStream} guildId={guildInfo.guildId} onClickModal={onClickModal} onClickRoomModal={onClickRoomModal} />
                             </ModalContainer>
-                    </div>}
-                    {isOpenRoomModal && 
+                        </div>}
+                    {isOpenRoomModal &&
                         <div isOpenRoomModal={isOpenRoomModal} toggle={onClickRoomModal}>
                             <RoomModal>
-                                <Room videoId={videoId} learningRecordId={learningRecordId} roomInfo={roomInfo} guildId={guildInfo.guildId} onClickRoomModal={onClickRoomModal}></Room>
+                                <Room messages={messages} videoId={videoId} learningRecordId={learningRecordId} roomInfo={roomInfo} guildId={guildInfo.guildId} onClickRoomModal={onClickRoomModal}></Room>
                             </RoomModal>
                         </div>
                     }

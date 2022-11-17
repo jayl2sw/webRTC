@@ -2,30 +2,24 @@ import React, { useEffect } from 'react';
 import { exitRoom } from './GuildPage';
 import VideoContainer from './VideoContainer';
 import { getLocalPreviewAndInitRoomConnection } from './GuildPage';
-import { createRoom, joinRoom } from './GuildPage'; 
+import ChatSection from './ChatSection';
 
-const Room = ({ roomInfo, guildId, videoId, learningRecordId, onClickRoomModal }) => {
-    const test = () => {
-        getLocalPreviewAndInitRoomConnection(roomInfo, roomInfo.roomNumber, guildId, videoId, learningRecordId);
-    }
+const Room = ({ messages, roomInfo, guildId, videoId, learningRecordId, onClickRoomModal }) => {
     useEffect(() => {
-        test()
-
+        getLocalPreviewAndInitRoomConnection(roomInfo, roomInfo.roomNumber, guildId, videoId, learningRecordId);
         return () => {
             exitRoom();
         }
     }, []);
     return (
         <div>
-            <VideoContainer/>
-            <p>{roomInfo.roomNumber}</p>
-            <p>{roomInfo.videoId}</p>
-            <p>{ JSON.stringify(roomInfo) }</p>  
+            <VideoContainer />
+            <ChatSection messages={messages} />
             <button onClick={() => {
                 onClickRoomModal()
                 exitRoom()
             }}>나가기</button>
-            
+
         </div>
     );
 };

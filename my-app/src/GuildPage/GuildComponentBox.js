@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import GuildRoomInfo from './GuildRoomInfo';
 
-const GuildComponentBox = ({ guildInfo, localStream }) => {
+const GuildComponentBox = ({ guildInfo, messages, localStream }) => {
     console.warn(localStream)
     const [roomNumber, setRoomNumber] = useState(1)
     useEffect(() => {
@@ -15,7 +15,7 @@ const GuildComponentBox = ({ guildInfo, localStream }) => {
                     <button onClick={() => setRoomNumber(2)}>Room2</button>
                     <button onClick={() => setRoomNumber(3)}>Room3</button>
                 </div>
-                <GuildRoomInfo localStream={localStream} guildInfo={guildInfo} roomNumber={roomNumber}/>
+                <GuildRoomInfo messages={messages} localStream={localStream} guildInfo={guildInfo} roomNumber={roomNumber} />
             </div>
         </div>
     );
