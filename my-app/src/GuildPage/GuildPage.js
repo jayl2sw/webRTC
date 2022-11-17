@@ -146,11 +146,21 @@ const defaultConstraint = {
   video:true,
 }
 
-export const getLocalPreviewAndInitRoomConnection = async() => {
+export const getLocalPreviewAndInitRoomConnection = (
+  roomInfo, roomNumber, guildId, videoId, learningRecordId
+) => {
   navigator.mediaDevices.getUserMedia(defaultConstraint).then(stream => {
-    console.log(1)
     localStream = stream;
     showLocalVideoPreview(localStream);
+
+    if (roomInfo) {
+      if (roomInfo.connectedUsers.length === 0) {
+          createRoom(roomNumber, guildId, videoId, learningRecordId)
+      } else {
+          joinRoom(roomNumber, guildId, learningRecordId) }
+  } else {
+      createRoom(roomNumber, guildId, videoId, learningRecordId)
+  }
   }).catch(err => {
       console.log('error occurred when trying to get an access to local stream')
       console.log(err);

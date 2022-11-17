@@ -5,10 +5,8 @@ import { getLocalPreviewAndInitRoomConnection } from './GuildPage';
 import { createRoom, joinRoom } from './GuildPage'; 
 
 const Room = ({ roomInfo, guildId, videoId, learningRecordId, onClickRoomModal }) => {
-    const test = async() => {
-        const a = await getLocalPreviewAndInitRoomConnection();
-        console.log("AAAAAAAAAAAAAAAAAAA", a)
-        JoinRoomhandler(roomInfo, roomInfo.roomNumber, guildId, videoId, learningRecordId);
+    const test = () => {
+        getLocalPreviewAndInitRoomConnection(roomInfo, roomInfo.roomNumber, guildId, videoId, learningRecordId);
     }
     useEffect(() => {
         test()
@@ -31,16 +29,5 @@ const Room = ({ roomInfo, guildId, videoId, learningRecordId, onClickRoomModal }
         </div>
     );
 };
-
-const JoinRoomhandler = (roomInfo, roomNumber, guildId, videoId, learningRecordId) => {
-    if (roomInfo) {
-        if (roomInfo.connectedUsers.length === 0) {
-            createRoom(roomNumber, guildId, videoId, learningRecordId)
-        } else {
-            joinRoom(roomNumber, guildId, learningRecordId) }
-    } else {
-        createRoom(roomNumber, guildId, videoId, learningRecordId)
-    }
-}
 
 export default Room;
