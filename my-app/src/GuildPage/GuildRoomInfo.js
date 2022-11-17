@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import useModal, { useRoomModal } from './util';
 import styled from 'styled-components' 
 import JoinRoom from './JoinRoom';
@@ -8,7 +8,9 @@ import Room from './Room';
 const GuildRoomInfo = ({ localStream, guildInfo, roomNumber }) => {
     const { isOpenModal, onClickModal } = useModal();
     const { isOpenRoomModal, onClickRoomModal } = useRoomModal();
-
+    const [videoId, setVideoId] = useState("")
+    const [learningRecordId, setLearningRecordId] = useState("")
+        
     let roomInfo = guildInfo.rooms[roomNumber-1];
 
     return (
@@ -25,13 +27,13 @@ const GuildRoomInfo = ({ localStream, guildInfo, roomNumber }) => {
                     {isOpenModal && !isOpenRoomModal && 
                         <div isOpenModal={isOpenModal} toggle={onClickModal}>
                             <ModalContainer>
-                                <JoinRoom localStream={localStream} roomInfo={roomInfo} guildId={guildInfo.guildId} onClickModal={onClickModal} onClickRoomModal={onClickRoomModal}/> 
+                                <JoinRoom roomInfo={roomInfo} setVideoId={setVideoId} setLearningRecordId={setLearningRecordId} localStream={localStream} guildId={guildInfo.guildId} onClickModal={onClickModal} onClickRoomModal={onClickRoomModal}/> 
                             </ModalContainer>
                     </div>}
                     {isOpenRoomModal && 
                         <div isOpenRoomModal={isOpenRoomModal} toggle={onClickRoomModal}>
                             <RoomModal>
-                                <Room roomInfo={roomInfo} guildId={guildInfo.guildId} onClickRoomModal={onClickRoomModal}></Room>
+                                <Room videoId={videoId} learningRecordId={learningRecordId} roomInfo={roomInfo} guildId={guildInfo.guildId} onClickRoomModal={onClickRoomModal}></Room>
                             </RoomModal>
                         </div>
                     }

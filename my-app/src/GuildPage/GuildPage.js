@@ -147,15 +147,15 @@ const defaultConstraint = {
 }
 
 export const getLocalPreviewAndInitRoomConnection = async() => {
-    navigator.mediaDevices.getUserMedia(defaultConstraint).then(stream => {
-      
-      localStream = stream;
-      showLocalVideoPreview(localStream);
-    }).catch(err => {
-        console.log('error occurred when trying to get an access to local stream')
-        console.log(err);
-    }) 
-      
+  navigator.mediaDevices.getUserMedia(defaultConstraint).then(stream => {
+    console.log(1)
+    localStream = stream;
+    showLocalVideoPreview(localStream);
+  }).catch(err => {
+      console.log('error occurred when trying to get an access to local stream')
+      console.log(err);
+  }) 
+    
 }
  
 
@@ -193,6 +193,7 @@ const getConfiguration = () => {
   }
 }
 
+
 export const prepareNewPeerConnection = ( connUserSocketId, isInitiator  ) => {
   const configuration = getConfiguration();
 
@@ -202,8 +203,6 @@ export const prepareNewPeerConnection = ( connUserSocketId, isInitiator  ) => {
     config: configuration,
     stream: localStream,
   });
-
-  console.log(peers[connUserSocketId])
 
   peers[connUserSocketId].on("signal", (data) => {
     console.log("시그널 출발")

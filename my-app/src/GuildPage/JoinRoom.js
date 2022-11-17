@@ -1,30 +1,7 @@
-import React, { useState } from 'react';
-import { createRoom, joinRoom } from './GuildPage'; 
-import { getLocalPreviewAndInitRoomConnection } from './GuildPage';
+import React from 'react';
 
-const JoinRoom = ({ localStream, roomInfo, guildId, onClickModal, onClickRoomModal }) => {
-    console.log(localStream)
-    const [videoId, setVideoId] = useState("")
-    const [learningRecordId, setLearningRecordId] = useState("")
-    const Join = async (roomInfo, roomNumber, guildId, videoId, learningRecordId) => {
-        // const testStream = getLocalPreviewAndInitRoomConnection() ;
-        setTimeout(() => {
-            getLocalPreviewAndInitRoomConnection()
-        }, 0);
-        setTimeout(3000);
-        console.log(localStream);
-        JoinRoomhandler(roomInfo, roomNumber, guildId, videoId, learningRecordId)         
-    }
-    const JoinRoomhandler = (roomInfo, roomNumber, guildId, videoId, learningRecordId) => {
-        if (roomInfo) {
-            if (roomInfo.connectedUsers.length === 0) {
-                createRoom(roomNumber, guildId, videoId, learningRecordId)
-            } else {
-                joinRoom(roomNumber, guildId, learningRecordId) }
-        } else {
-            createRoom(roomNumber, guildId, videoId, learningRecordId)
-        }
-    }  
+const JoinRoom = ({ roomInfo, setVideoId, setLearningRecordId, onClickModal, onClickRoomModal }) => {
+
     return (
         <div>
             <div>
@@ -40,7 +17,6 @@ const JoinRoom = ({ localStream, roomInfo, guildId, onClickModal, onClickRoomMod
             <button onClick ={() => {
                 onClickModal()
                 onClickRoomModal()
-                Join(roomInfo, roomInfo.roomNumber, guildId, videoId, learningRecordId)
             }}
                 >
                 입장하기    

@@ -33,6 +33,14 @@ io.on("connection", (socket) => {
     console.log("join-room에 들어왔습니다.")
     joinRoomHandler(data, socket);
   });
+  socket.on("conn-signal", (data) => {
+    console.log("conn-signal이 도착했습니다.")
+    signalingHandler(data, socket);
+  });
+  socket.on("conn-init", (data) => {
+    console.log("conn-init이 도착했습니다.")
+    initializeConnectionHandler(data, socket);
+  });
   socket.on("exit-room", () => {
     console.log("방에서 나가는 요청이 도착했습니다.")
     exitRoomHandler(socket);
@@ -41,8 +49,7 @@ io.on("connection", (socket) => {
     console.log("길드 채널에서 나갑니다.")
     disconnectedHandler(socket);
   });
-
-});
+})
 
 const joinGuildChannelHandler = (data, socket) => {
   const { nickname, guildId } = data
@@ -142,6 +149,15 @@ const joinRoomHandler = (data, socket) => {
     room.connectedUsers = [...(room.connectedUsers), user]
 
     socket.join(roomId)
+    room.connectedUsers.forEach((user) => {
+      if (user.socketId !== socket.id) {
+        const data = {
+          connUserSocketId: socket.id,
+        };
+
+        io.to(user.socketId).emit("conn-prepare", data);
+      }
+    });
     guild.connectedUsers.forEach((user) => {
       io.to(user.socketId).emit("guild-update", { guild })
     })
@@ -209,6 +225,36 @@ const disconnectedHandler = (socket) => {
     })
   }
 }
+
+const signalingHandler = (data, socket) => {
+  const { connUserSocketId, signal } = data;
+
+  const signalingData = { signal, connUserSocketId: socket.id };
+  io.to(connUserSocketId).emit("conn-signal", signalingData);
+  console.log(connUserSocketId, "한테 conn-signal 보냄")
+};
+
+// information from clients which are already in room that They have prepared for incoming connection
+const initializeConnectionHandler = (data, socket) => {
+    const { connUserSocketId } = data;
+
+    const initData = { connUserSocketId: socket.id };
+    io.to(connUserSocketId).emit("conn-init", initData);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 server.listen(5002, () => {
   console.log("server start on 5002");
