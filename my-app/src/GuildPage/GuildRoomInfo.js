@@ -5,7 +5,7 @@ import JoinRoom from './JoinRoom';
 import Room from './Room';
 
 
-const GuildRoomInfo = ({ guildInfo, roomNumber }) => {
+const GuildRoomInfo = ({ localStream, guildInfo, roomNumber }) => {
     const { isOpenModal, onClickModal } = useModal();
     const { isOpenRoomModal, onClickRoomModal } = useRoomModal();
 
@@ -25,7 +25,7 @@ const GuildRoomInfo = ({ guildInfo, roomNumber }) => {
                     {isOpenModal && !isOpenRoomModal && 
                         <div isOpenModal={isOpenModal} toggle={onClickModal}>
                             <ModalContainer>
-                                <JoinRoom roomInfo={roomInfo} guildId={guildInfo.guildId} onClickModal={onClickModal} onClickRoomModal={onClickRoomModal}/> 
+                                <JoinRoom localStream={localStream} roomInfo={roomInfo} guildId={guildInfo.guildId} onClickModal={onClickModal} onClickRoomModal={onClickRoomModal}/> 
                             </ModalContainer>
                     </div>}
                     {isOpenRoomModal && 

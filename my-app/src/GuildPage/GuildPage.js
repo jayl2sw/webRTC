@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import GuildComponentBox from  './GuildComponentBox'
 import io from "socket.io-client";
-import Peer from 'simple-peer'
+import Peer from 'simple-peer';
 
 
 import "./GuildPage.css";
@@ -62,6 +62,7 @@ const GuildPage = () => {
 
       socket.on("conn-prepare", (data) => {
         const { connUserSocketId } = data;
+        console.log("====================prepare 시작===================")
         prepareNewPeerConnection(connUserSocketId, false);
 
         // inform the user which just join the room that we have prepared for incoming connection
@@ -73,16 +74,16 @@ const GuildPage = () => {
       });
 
       socket.on("conn-init", (data) => {
+        console.log("====================init 시작===================")
         const { connUserSocketId } = data;
         prepareNewPeerConnection(connUserSocketId, true);
-
       })
   }
 
   return (
       <div>
           {bool &&
-          <GuildComponentBox guildInfo={guildInfo} />
+          <GuildComponentBox guildInfo={guildInfo} localStream={localStream}/>
           }
       </div>
   );
@@ -138,23 +139,23 @@ export const exitRoom = () =>{
 
 
 let localStream;
+
 // join-room 대체
 const defaultConstraint = {
   audio:true,
   video:true,
 }
 
-export const getLocalPreviewAndInitRoomConnection = () => {
+export const getLocalPreviewAndInitRoomConnection = async() => {
     navigator.mediaDevices.getUserMedia(defaultConstraint).then(stream => {
-        localStream = stream;
-        showLocalVideoPreview(localStream);
-
+      
+      localStream = stream;
+      showLocalVideoPreview(localStream);
     }).catch(err => {
         console.log('error occurred when trying to get an access to local stream')
         console.log(err);
-
-    })
-    
+    }) 
+      
 }
  
 
@@ -192,27 +193,30 @@ const getConfiguration = () => {
   }
 }
 
-export const prepareNewPeerConnection = (connUserSocketId, isInitiator) => {
+export const prepareNewPeerConnection = ( connUserSocketId, isInitiator  ) => {
   const configuration = getConfiguration();
 
+  console.log("==============localstream ============",localStream)
   peers[connUserSocketId] = new Peer({
     initiator: isInitiator,
     config: configuration,
     stream: localStream,
   });
 
-  peers[connUserSocketId].on('signal', (data) => {
-    
+  console.log(peers[connUserSocketId])
+
+  peers[connUserSocketId].on("signal", (data) => {
+    console.log("시그널 출발")
     // webRTC offer, webRTC Answer
     const signalData = {
       signal: data,
       connUserSocketId: connUserSocketId,
     }
 
-    signalPeerData(signalData)
+    signalPeerData(signalData);
   });
 
-  peers[connUserSocketId].on('stream', (stream) => {
+  peers[connUserSocketId].on("stream", (stream) => {
     console.log("new stream came");
 
     addStream(stream, connUserSocketId);
@@ -235,8 +239,10 @@ const addStream = (stream, connUserSocketId) => {
   videoElement.onloadedmetadata = () => {
     videoElement.play();
   };
-
   videoContainer.appendChild(videoElement);
+
+
+  videoContainer.style.position = "static";
   videosContainer.appendChild(videoContainer);
 }
 
@@ -246,6 +252,7 @@ const signalPeerData = (data) => {
 
 const handleSignalingData = (data) => {
   // add signaling data to peer connection
+  console.log("받은 시그널 상대에게 돌려보내줌")
   peers[data.connUserSocketId].signal(data.signal);
 
 }

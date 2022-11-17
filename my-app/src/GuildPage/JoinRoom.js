@@ -1,9 +1,30 @@
 import React, { useState } from 'react';
 import { createRoom, joinRoom } from './GuildPage'; 
+import { getLocalPreviewAndInitRoomConnection } from './GuildPage';
 
-const JoinRoom = ({ roomInfo, guildId, onClickModal, onClickRoomModal }) => {
+const JoinRoom = ({ localStream, roomInfo, guildId, onClickModal, onClickRoomModal }) => {
+    console.log(localStream)
     const [videoId, setVideoId] = useState("")
     const [learningRecordId, setLearningRecordId] = useState("")
+    const Join = async (roomInfo, roomNumber, guildId, videoId, learningRecordId) => {
+        // const testStream = getLocalPreviewAndInitRoomConnection() ;
+        setTimeout(() => {
+            getLocalPreviewAndInitRoomConnection()
+        }, 0);
+        setTimeout(3000);
+        console.log(localStream);
+        JoinRoomhandler(roomInfo, roomNumber, guildId, videoId, learningRecordId)         
+    }
+    const JoinRoomhandler = (roomInfo, roomNumber, guildId, videoId, learningRecordId) => {
+        if (roomInfo) {
+            if (roomInfo.connectedUsers.length === 0) {
+                createRoom(roomNumber, guildId, videoId, learningRecordId)
+            } else {
+                joinRoom(roomNumber, guildId, learningRecordId) }
+        } else {
+            createRoom(roomNumber, guildId, videoId, learningRecordId)
+        }
+    }  
     return (
         <div>
             <div>
@@ -19,7 +40,7 @@ const JoinRoom = ({ roomInfo, guildId, onClickModal, onClickRoomModal }) => {
             <button onClick ={() => {
                 onClickModal()
                 onClickRoomModal()
-                JoinRoomhandler(roomInfo, roomInfo.roomNumber, guildId, videoId, learningRecordId)
+                Join(roomInfo, roomInfo.roomNumber, guildId, videoId, learningRecordId)
             }}
                 >
                 입장하기    
@@ -29,17 +50,9 @@ const JoinRoom = ({ roomInfo, guildId, onClickModal, onClickRoomModal }) => {
             }}>나가기</button>
         </div>
     );
+    
 };
 
-const JoinRoomhandler = (roomInfo, roomNumber, guildId, videoId, learningRecordId) => {
-    if (roomInfo) {
-        if (roomInfo.connectedUsers.length === 0) {
-            createRoom(roomNumber, guildId, videoId, learningRecordId)
-        } else {
-            joinRoom(roomNumber, guildId, learningRecordId) }
-    } else {
-        createRoom(roomNumber, guildId, videoId, learningRecordId)
-    }
-}  
+
 
 export default JoinRoom;

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { exitRoom } from './GuildPage';
-import { getLocalPreviewAndInitRoomConnection } from './GuildPage';
 import VideoContainer from './VideoContainer';
 
 
@@ -8,7 +7,6 @@ import VideoContainer from './VideoContainer';
 const Room = ({ roomInfo, guildId, onClickRoomModal }) => {
     
     useEffect(() => {
-        getLocalPreviewAndInitRoomConnection() 
         return () => {
             exitRoom();
         }
