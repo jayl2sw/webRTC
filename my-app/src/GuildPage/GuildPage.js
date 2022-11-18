@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import GuildComponentBox from './GuildComponentBox'
 import io from "socket.io-client";
 import Peer from 'simple-peer';
-
+import axios from "axios";
 
 import "./GuildPage.css";
 
 const guildId = 3;
 const nickname = "nickname";
-const messages = [];
+let messages = [];
 
 const GuildPage = () => {
   const [bool, setBool] = useState(false);
@@ -65,10 +65,12 @@ const GuildPage = () => {
 
     socket.on("conn-prepare", (data) => {
       const { connUserSocketId } = data;
-      console.log("====================prepare 시작===================")
+      console.log("====================prepare 받음===================")
       prepareNewPeerConnection(connUserSocketId, false);
 
+
       // inform the user which just join the room that we have prepared for incoming connection
+      console.log(5)
       socket.emit('conn-init', { connUserSocketId: connUserSocketId })
     })
 
@@ -76,11 +78,15 @@ const GuildPage = () => {
       handleSignalingData(data);
     });
 
+    socket.on("user-disconnected", (data) => {
+      removePeerConnection(data);
+    });
+
     socket.on("conn-init", (data) => {
       console.log("====================init 시작===================")
       const { connUserSocketId } = data;
       prepareNewPeerConnection(connUserSocketId, true);
-    })
+    });
   }
 
   return (
@@ -90,9 +96,6 @@ const GuildPage = () => {
       }
     </div>
   );
-
-
-
 };
 
 
@@ -150,9 +153,12 @@ const defaultConstraint = {
   video: true,
 }
 
-export const getLocalPreviewAndInitRoomConnection = (
+export const getLocalPreviewAndInitRoomConnection = async (
   roomInfo, roomNumber, guildId, videoId, learningRecordId
 ) => {
+
+  await fetchTURNCredentials(); await fetchTURNCredentials();
+
   navigator.mediaDevices.getUserMedia(defaultConstraint).then(stream => {
     localStream = stream;
     showLocalVideoPreview(localStream);
@@ -198,31 +204,95 @@ const showLocalVideoPreview = (stream) => {
 let peers = {};
 let streams = {};
 
-const getConfiguration = () => {
-  return {
-    iceServers: [
-      {
-        urls: 'stun:stun.l.google.com:19302'
-      }
-    ]
+export const removePeerConnection = (data) => {
+  const { socketId } = data;
+  const videoContainer = document.getElementById(socketId);
+  const videoEl = document.getElementById(`${socketId}-video`);
+
+  if (videoContainer && videoEl) {
+    const tracks = videoEl.srcObject.getTracks();
+
+    tracks.forEach((t) => t.stop());
+
+    videoEl.srcObject = null;
+    videoContainer.removeChild(videoEl);
+
+    videoContainer.parentNode.removeChild(videoContainer);
+
+    if (peers[socketId]) {
+      peers[socketId].destroy();
+    }
+    delete peers[socketId];
   }
-}
+};
+
+
+
+////////////////////////////turn///////////////////////////////////////
+let TURNIceServers = null;
+
+export const fetchTURNCredentials = async () => {
+  const responseData = await getTURNCredentials();
+  console.log("responseDAta", responseData.token)
+  if (responseData.token?.iceServers) {
+    TURNIceServers = responseData.token.iceServers;
+  }
+
+  return TURNIceServers;
+};
+
+export const getTurnIceServers = () => {
+  return TURNIceServers;
+};
+
+// const getConfiguration = () => {
+//   return {
+//     iceServers: [
+//       {
+//         urls: 'stun:stun.l.google.com:19302'
+//       }
+//     ]
+//   }
+// }
+
+const getConfiguration = () => {
+  const turnIceServers = getTurnIceServers();
+
+  if (turnIceServers) {
+    return {
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+        ...turnIceServers,
+      ],
+    };
+  } else {
+    console.warn("Using only STUN server");
+    return {
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+      ],
+    };
+  }
+};
 
 const messengerChanel = 'messenger';
 
 export const prepareNewPeerConnection = (connUserSocketId, isInitiator) => {
   const configuration = getConfiguration();
-
-  console.log("==============localstream ============", localStream)
+  console.log(1)
   peers[connUserSocketId] = new Peer({
     initiator: isInitiator,
     config: configuration,
     stream: localStream,
     channelName: messengerChanel,
   });
-
+  console.log(2)
   peers[connUserSocketId].on("signal", (data) => {
-    console.log("시그널 출발")
+    console.log("start signal")
     // webRTC offer, webRTC Answer
     const signalData = {
       signal: data,
@@ -236,13 +306,13 @@ export const prepareNewPeerConnection = (connUserSocketId, isInitiator) => {
     console.log("new stream came");
 
     addStream(stream, connUserSocketId);
-    streams = [...streams, stream]
-  })
+    streams = [...streams, stream];
+  });
 
-  peers[connUserSocketId].on('data', (data) => {
-    const messageData = JSON.parse(data);
-    appendNewMessage(messageData);
-  })
+  // peers[connUserSocketId].on("data", (data) => {
+  //   const messageData = JSON.parse(data);
+  //   appendNewMessage(messageData);
+  // });
 }
 
 const addStream = (stream, connUserSocketId) => {
@@ -307,6 +377,12 @@ export const sendMessageUsingDataChannel = (messageContent) => {
     peers[socketId].send(stringifiedMessageData);
   }
 }
+
+const serverApi = "http://localhost:5002/api";
+export const getTURNCredentials = async () => {
+  const response = await axios.get(`${serverApi}/get-turn-credentials`);
+  return response.data;
+};
 
 
 export default GuildPage;

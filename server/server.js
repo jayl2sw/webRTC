@@ -1,6 +1,8 @@
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
+const twilio = require("twilio");
+const { send } = require("process");
 
 const PORT = 5002;
 const app = express();
@@ -18,6 +20,24 @@ const io = require("socket.io")(server, {
   },
 });
 
+app.get("/api/get-turn-credentials", (req, res) => {
+  const accountSid = "AC7cff1792ce0f8d410f4790a5048eeeb7";
+  const authToken = "c9f5e65fe22c2e6764d5ca5530d4970c";
+
+  const client = twilio(accountSid, authToken);
+
+  res.send({ token: null });
+  try {
+    client.tokens.create().then((token) => {
+      res.send({ token });
+    });
+  } catch (err) {
+    console.log("error occurred when fetching turn server credentials");
+    console.log(err);
+    res.send({ token: null });
+  }
+});
+
 io.on("connection", (socket) => {
   console.log(`user connected ${socket.id}`);
 
@@ -26,19 +46,19 @@ io.on("connection", (socket) => {
     joinGuildChannelHandler(data, socket);
   });
   socket.on("create-room", (data) => {
-    console.log("enter-room에 들어왔습니다.")
+    console.log("1 enter-room에 들어왔습니다.")
     createRoomHandler(data, socket);
   });
   socket.on("join-room", (data) => {
-    console.log("join-room에 들어왔습니다.")
+    console.log("2 join-room에 들어왔습니다.")
     joinRoomHandler(data, socket);
   });
   socket.on("conn-signal", (data) => {
-    console.log("conn-signal이 도착했습니다.")
+    console.log("6 conn-signal 이 도착했습니다.");
     signalingHandler(data, socket);
   });
   socket.on("conn-init", (data) => {
-    console.log("conn-init이 도착했습니다.")
+    console.log("4 conn-init 이 도착했습니다.")
     initializeConnectionHandler(data, socket);
   });
   socket.on("exit-room", () => {
@@ -56,7 +76,7 @@ const joinGuildChannelHandler = (data, socket) => {
 
   const newUser = {
     nickname,
-    guildId, 
+    guildId,
     socketId: socket.id,
     roomNumber: null,
     learningRecordId: null
@@ -64,16 +84,12 @@ const joinGuildChannelHandler = (data, socket) => {
   const thisGuild = guilds.filter((guild) => {
     return guild.guildId === guildId
   })
-  console.log(thisGuild)
+
   if (thisGuild.length > 0) {
     const guild = thisGuild[0]
     guild.connectedUsers = [...(guild.connectedUsers), newUser]
     connectedUsers = [...connectedUsers, newUser]
-    console.log("길드 채널 들어오고 emit")
-    io.to(socket.id).emit("guild-update", { guild }) 
-    // guildInfo.connectedUsers.forEach((user) => {
-    //   io.to(user.socketId).emit("guild-update", guildInfo)
-    // })
+    io.to(socket.id).emit("guild-update", { guild })
   } else {
     const newGuild = {
       guildId,
@@ -98,22 +114,18 @@ const joinGuildChannelHandler = (data, socket) => {
     }
     guilds = [...guilds, newGuild]
     connectedUsers = [...connectedUsers, newUser]
-    console.log("새로 길드만들고 emit")
   }
 }
 
 const createRoomHandler = (data, socket) => {
   const { roomNumber, guildId, videoId, learningRecordId } = data
-  console.log("==========================================================")
-  console.log(`r:${roomNumber}, g:${guildId}, v:${videoId}, l:${learningRecordId}`)
-  console.log("==========================================================")
 
   let guild = guilds.find((g) => {
     return g.guildId === guildId
   });
-  console.log(guild);
-  const roomId = guildId+"-"+roomNumber;
-  
+
+  const roomId = guildId + "-" + roomNumber;
+
   if (guild) {
     let user = guild.connectedUsers.find((user) => user.socketId === socket.id);
     let room = guild.rooms.find((room) => room.roomNumber === roomNumber)
@@ -131,15 +143,12 @@ const createRoomHandler = (data, socket) => {
 
 const joinRoomHandler = (data, socket) => {
   const { roomNumber, guildId, learningRecordId } = data
-  console.log("==========================================================")
-  console.log(`r:${roomNumber}, g:${guildId}, l:${learningRecordId}`)
-  console.log("==========================================================")
 
   let guild = guilds.find((g) => {
     return g.guildId === guildId
   });
 
-  const roomId = guildId+"-"+roomNumber;
+  const roomId = guildId + "-" + roomNumber;
 
   if (guild) {
     let user = guild.connectedUsers.find((u) => u.socketId === socket.id);
@@ -155,6 +164,7 @@ const joinRoomHandler = (data, socket) => {
           connUserSocketId: socket.id,
         };
 
+        console.log(`3 send prepare to ${user.socketId}`)
         io.to(user.socketId).emit("conn-prepare", data);
       }
     });
@@ -181,22 +191,20 @@ const exitRoomHandler = (socket) => {
     })
 
     if (room) {
-      room.connectedUsers =room.connectedUsers.filter(u => {
+      room.connectedUsers = room.connectedUsers.filter(u => {
         return u.socketId != user.socketId
       })
       if (room.connectedUsers.length < 1) {
         room.videoId = null;
       }
-      console.log(room.connectedUsers)
 
-      const roomId = guild.guildId + "-"+ room.roomNumber
+      const roomId = guild.guildId + "-" + room.roomNumber
       socket.leave(roomId)
-      
-      
-      console.log("================guildroom.connectedUsersUpdate=================")
-      console.log(guild)
+
+      room.connectedUsers.forEach(u => {
+        io.to(u.socketId).emit("user-disconnected", { socketId: socket.id })
+      })
       guild.connectedUsers.forEach(u => {
-        // io.to(u.socketId).emit("user-disconnected", { socketId: socket.id });
         io.to(u.socketId).emit("guild-update", { guild })
       })
     }
@@ -209,13 +217,13 @@ const disconnectedHandler = (socket) => {
     return user.socketId === socket.id
   });
 
-  console.log(user)
-  if (user){
+  // console.log(user)
+  if (user) {
     if (user.roomNumber) {
       exitRoomHandler(socket)
     }
     const guild = guilds.find(g => g.guildId == user.guildId);
-    if (guild){
+    if (guild) {
       guild.connectedUsers = guild.connectedUsers.filter(u => {
         return u.socketId != user.socketId
       })
@@ -236,10 +244,10 @@ const signalingHandler = (data, socket) => {
 
 // information from clients which are already in room that They have prepared for incoming connection
 const initializeConnectionHandler = (data, socket) => {
-    const { connUserSocketId } = data;
-
-    const initData = { connUserSocketId: socket.id };
-    io.to(connUserSocketId).emit("conn-init", initData);
+  const { connUserSocketId } = data;
+  const initData = { connUserSocketId: socket.id };
+  console.log("5 init message to new member");
+  io.to(connUserSocketId).emit("conn-init", initData);
 }
 
 

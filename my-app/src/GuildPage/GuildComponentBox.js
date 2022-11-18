@@ -2,11 +2,7 @@ import React, { useEffect, useState } from 'react';
 import GuildRoomInfo from './GuildRoomInfo';
 
 const GuildComponentBox = ({ guildInfo, messages, localStream }) => {
-    console.warn(localStream)
     const [roomNumber, setRoomNumber] = useState(1)
-    useEffect(() => {
-        console.log("?")
-    }, [])
     return (
         <div>
             <div className='container'>
